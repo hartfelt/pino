@@ -1,26 +1,32 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# TODO: real options
-options = {
-	'paths': [
-		(u'/home/bjuhn/lain', u'Lain'),
-		(u'/home/bjuhn/incoming', u'Incoming'),
-	],
-	'player': ['/usr/bin/mplayer', '-fs'],
-	'uiscale': 1.0,
-}
-
 import math
 import os, os.path
 import subprocess
 from libavg import avg, AVGApp, ui
 
+try:
+	import settings
+except ImportError:
+	class settings:
+		paths = [
+			(os.getcwd(), os.getcwd()),
+		]
+		player = ['/usr/bin/mplayer', '-fs']
+		uiscale = 1.0
+
 # Singleton player-object for easy reference.
 player = avg.Player.get()
 
 # Actual screen size
-width, height = map(lambda x:int(x*options['uiscale']), player.getScreenResolution())
+width, height = map(
+	lambda x:int(x*settings.uiscale),
+	player.getScreenResolution())
+if hasattr(settings, 'width'):
+	width = settings.width
+if hasattr(settings, 'height'):
+	height = settings.height
 
 scale = min(width/1920.0, height/1080.0)
 aw, ah = 1920*scale, 1080*scale
@@ -64,7 +70,7 @@ class Pino(AVGApp):
 		}
 		self.notifies = []
 		
-		self.ROOT = [('d', path, label) for path, label in options['paths']]
+		self.ROOT = [('d', path, label) for path, label in settings.paths]
 			#('d', 'new', u'Newly added files'),
 			#('a', 'update', u'Update database'),
 		
@@ -162,7 +168,7 @@ class Pino(AVGApp):
 			self.scrollbar.fillopacity = 0
 	
 	def draw_item(self, icon, text, selected, y):
-		box = avg.DivNode(pos=(X(0), Y(y)), size=WH(1200, 50), opacity=1)
+		box = avg.DivNode(pos=(W(0), H(y)), size=WH(1200, 50), opacity=1)
 		if selected:
 			avg.RectNode(parent=box,
 				pos=WH(0,0), size=WH(1200,50), fillcolor='000000',
@@ -182,7 +188,8 @@ class Pino(AVGApp):
 		self.listing.appendChild(box)
 	
 	def play(self, item):
-		subprocess.call(options['player'] + [item])
+		self.notify('Working...')
+		subprocess.call(settings.player + [item])
 	
 	def onKeyDown(self, event):
 		c = event.keycode
