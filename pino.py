@@ -10,9 +10,10 @@ options = {
 	'player': ['/usr/bin/mplayer', '-fs'],
 }
 
+import math
 import os, os.path
-from libavg import avg, AVGApp, ui
 import subprocess
+from libavg import avg, AVGApp, ui
 
 # Singleton player-object for easy reference.
 player = avg.Player.get()
@@ -49,6 +50,9 @@ class Pino(AVGApp):
 			fillopacity=.6, strokewidth=0)
 		self.listing = avg.DivNode(parent=self._parentNode,
 			pos=XY(20, 60), size=WH(1200, 1000), crop=True)
+		self.scrollbar = avg.RectNode(parent=self._parentNode,
+			pos=XY(1225, 60), size=WH(10, 1000), fillcolor='ffffff',
+			fillopacity=0, strokewidth=0)
 		
 		self.key_map = {
 			13: self.select,
@@ -103,13 +107,15 @@ class Pino(AVGApp):
 	def change_dir(self, to):
 		if to == '..':
 			if self.dir_path:
-				_, sel = self.dir_path.pop()
+				_, sel, scr = self.dir_path.pop()
 				self.dir_selected = sel
+				self.dir_scroll = scr
 				if self.dir_path == []:
 					self.dir_listing = self.ROOT
 		else:
-			self.dir_path.append((to, self.dir_selected))
+			self.dir_path.append((to, self.dir_selected, self.dir_scroll))
 			self.dir_selected = 0
+			self.dir_scroll = 0
 		
 		# OK, we have changed somewhere... find out what is here.
 		if self.dir_path:
@@ -141,6 +147,18 @@ class Pino(AVGApp):
 				self.draw_item(' ', text, selected, y)
 			else:
 				self.notify('Unknown type: ' + type, color='AA0000')
+		# Do we need a scroll-bar?
+		dir_len = len(self.dir_listing)
+		if dir_len > 20:
+			# We do..
+			pages = math.ceil(dir_len/20.0)
+			top = (self.dir_selected/float(dir_len-1))
+			self.scrollbar.pos = (self.scrollbar.pos[0], Y(60 + (1000-(1000/pages))*top))
+			self.scrollbar.size = (self.scrollbar.size[0], H(1000/pages))
+			self.scrollbar.fillopacity = .8
+		else:
+			# we don't
+			self.scrollbar.fillopacity = 0
 	
 	def draw_item(self, icon, text, selected, y):
 		box = avg.DivNode(pos=(X(0), Y(y)), size=WH(1200, 50), opacity=1)
@@ -176,10 +194,12 @@ class Pino(AVGApp):
 	
 	def up(self, event):
 		self.dir_selected = (self.dir_selected - 1) % len(self.dir_listing)
+		self.dir_scroll = (self.dir_selected / 20) * 20
 		self.draw_dir()
 	
 	def down(self, event):
 		self.dir_selected = (self.dir_selected + 1) % len(self.dir_listing)
+		self.dir_scroll = (self.dir_selected / 20) * 20
 		self.draw_dir()
 	
 	def back(self, event):
