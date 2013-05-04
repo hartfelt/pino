@@ -8,6 +8,7 @@ options = {
 		(u'/home/bjuhn/incoming', u'Incoming'),
 	],
 	'player': ['/usr/bin/mplayer', '-fs'],
+	'uiscale': 1.0,
 }
 
 import math
@@ -19,7 +20,7 @@ from libavg import avg, AVGApp, ui
 player = avg.Player.get()
 
 # Actual screen size
-width, height = map(lambda x:int(x/1.5), player.getScreenResolution())
+width, height = map(lambda x:int(x*options['uiscale']), player.getScreenResolution())
 
 scale = min(width/1920.0, height/1080.0)
 aw, ah = 1920*scale, 1080*scale
