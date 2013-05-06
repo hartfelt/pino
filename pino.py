@@ -4,7 +4,8 @@
 import math
 import os, os.path
 import subprocess
-from libavg import avg, AVGApp
+import sys
+import pygame
 
 try:
 	import settings
@@ -15,59 +16,42 @@ except ImportError:
 		]
 		player = ['/usr/bin/mplayer', '-fs']
 
-# Singleton player-object for easy reference.
-player = avg.Player.get()
-
-# Actual screen size
-width, height = map(
-	lambda x:int(x),
-	player.getScreenResolution())
-if hasattr(settings, 'width'):
-	width = settings.width
-if hasattr(settings, 'height'):
-	height = settings.height
+pygame.init()
+screen = pygame.display.set_mode((1366,768), pygame.DOUBLEBUF, 32)#1920,1080), pygame.FULLSCREEN)
+width, height = screen.get_size()
 
 scale = min(width/1920.0, height/1080.0)
 aw, ah = 1920*scale, 1080*scale
 dx, dy = (width-aw)/2, (height-ah)/2
 
-player.setWindowPos(0, 0)
-player.setResolution(True, width, height, 32)
-player.setWindowFrame(False)
-font = 'Bitstream Vera Sans'
+font = pygame.font.Font('media/sans.ttf', int(round(30 * scale)))
+
+COLOR = {
+	'white': pygame.color.Color(255,255,255),
+	'black': pygame.color.Color(0,0,0),
+	'light': pygame.color.Color(200,200,200),
+	'dark': pygame.color.Color(160,160,160),
+}
 
 # Helpers to scale stuff to fit on the conceptual 1920×1080-screen
-F = lambda s: s * 30 * scale
-X = lambda x: x * scale + dx
-Y = lambda y: y * scale + dy
-W = H = lambda l: l * scale
+X = lambda x: int(x * scale + dx)
+Y = lambda y: int(y * scale + dy)
+W = H = lambda l: int(l * scale)
 def XY(x,y): return X(x), Y(y)
 def WH(w,h): return W(w), H(h)
 
-class Pino(AVGApp):
-	def init(self):
-		self.background = avg.ImageNode(parent=self._parentNode,
-			pos=(0, 0), size=(width,height), href='media/bg.png')
-		avg.WordsNode(parent=self._parentNode,
-			pos=XY(20, 20), text=u'Pino', fontsize=F(1), font=font)
-		
-		avg.RectNode(parent=self._parentNode,
-			pos=XY(20, 60), size=WH(1200, 1000), fillcolor='000000',
-			fillopacity=.6, strokewidth=0)
-		self.listing = avg.DivNode(parent=self._parentNode,
-			pos=XY(20, 60), size=WH(1200, 1000), crop=True)
-		self.scrollbar = avg.RectNode(parent=self._parentNode,
-			pos=XY(1225, 60), size=WH(10, 1000), fillcolor='ffffff',
-			fillopacity=0, strokewidth=0)
-		
+class Pino(object):
+	def __init__(self):
+		self.set_background('media/bg.png')
 		self.key_map = {
-			13: self.select,
-			273: self.up,
-			274: self.down,
-			275: self.select, # right
-			276: self.back, # back
+			pygame.K_RETURN: self.select,
+			pygame.K_UP: self.up,
+			pygame.K_DOWN: self.down,
+			pygame.K_RIGHT: self.select, # right
+			pygame.K_LEFT: self.back, # back
+			pygame.K_ESCAPE: sys.exit
 		}
-		self.notifies = []
+		self.notifies = {}
 		
 		self.ROOT = [('d', path, label) for path, label in settings.paths]
 			#('d', 'new', u'Newly added files'),
@@ -77,38 +61,67 @@ class Pino(AVGApp):
 		self.dir_listing = self.ROOT
 		self.dir_scroll = 0
 		self.dir_selected = 0
-		#self.dir_selected_action = lambda: None
-		
-		self.draw_dir()
 	
-	def notify(self, message, duration=4000, color='000000'):
-		words = avg.WordsNode(
-			text=message, fontsize=F(1), font=font, color='ffffff')
-		words_width = words.getMediaSize()[0] + W(40)
-		
-		# Find suitable place for notification.
-		y = 0
+	def run(self):
 		while True:
-			if not y in self.notifies:
+			for event in pygame.event.get():
+				if event.type == pygame.QUIT:
+					return
+				elif event.type == pygame.KEYDOWN:
+					c = event.key
+					if c in self.key_map.keys():
+						print self.key_map[c]()
+					else:	
+						self.notify('Unhandled key: {}'.format(c), duration=1000)
+			
+			# Draw the screen
+			screen.blit(self.background, (0,0))
+			self.draw_text(u'Pino', COLOR['white'], XY(20,20))
+			self.draw_trans_rect(
+				COLOR['black'], 128,
+				XY(20, 60), WH(1200, 1000))
+			self.draw_dir()
+			self.draw_notifies()
+			
+			pygame.display.flip()
+	
+	def draw_trans_rect(self, color, alpha, pos, size):
+		s = pygame.Surface(size)
+		s.set_alpha(alpha)
+		s.fill(color)
+		screen.blit(s, pos)
+	
+	def draw_text(self, text, color, pos, max_length=None):
+		if max_length and font.size(text)[0] > max_length:
+			while font.size(text + '...')[0] > max_length:
+				text = text[:-1]
+			screen.blit(font.render(text + '...', True, color), pos)
+		else:
+			screen.blit(font.render(text, True, color), pos)
+	
+	def set_background(self, filename):
+		self.background = pygame.transform.smoothscale(
+			pygame.image.load(filename).convert(),
+			(width,height))
+		
+	def notify(self, message, duration=4000, color=COLOR['black']):
+		x = W(1920) - font.size(message)[0] - W(30)
+		# Find suitable place for notification.
+		y = 10
+		while True:
+			if not y in self.notifies.keys():
 				break
 			y += 60
-		self.notifies.append(y)
-		
-		box = avg.DivNode(parent=self._parentNode,
-			pos=(X(1910)-words_width, Y(y)), size=WH(words_width, 50),
-			opacity=0)
-		avg.RectNode(parent=box,
-			pos=(0,0), size=(words_width, H(50)), fillcolor=color,
-			fillopacity=.6, strokewidth=0)
-		box.appendChild(words)
-		words.pos = WH(20,5)
-		
-		avg.LinearAnim(box, 'opacity', 300, 0, 1).start()
-		stop = (lambda: (self._parentNode.removeChild(box), self.notifies.remove(y)))
-		player.setTimeout(duration, avg.LinearAnim(
-			box, 'opacity', 300, 1.0, 0.0
-		).start)
-		player.setTimeout(duration+300, stop)
+		self.notifies[y] = (message, color, pygame.time.get_ticks()+duration, x)
+	
+	def draw_notifies(self):
+		now = pygame.time.get_ticks()
+		for y, (message, color, timeout, x) in self.notifies.items():
+			if timeout < now:
+				del self.notifies[y]
+			else:
+				self.draw_trans_rect(color, 128, (x, Y(y)), (W(1910)-x, H(50)))
+				self.draw_text(message, COLOR['white'], (x+W(10), Y(y+5)))
 	
 	def change_dir(self, to):
 		if to == '..':
@@ -140,17 +153,13 @@ class Pino(AVGApp):
 		self.draw_dir()
 	
 	def draw_dir(self):
-		while self.listing.getNumChildren():
-			self.listing.removeChild(0)
-		
 		these = self.dir_listing[self.dir_scroll:self.dir_scroll + 20]
 		for index, (type, target, text) in enumerate(these):
 			selected = (index+self.dir_scroll == self.dir_selected)
-			y = index*50
 			if type == 'd':
-				self.draw_item('dir', text, selected, y)
+				self.draw_item('dir', text, selected, index)
 			elif type == 'f':
-				self.draw_item(' ', text, selected, y)
+				self.draw_item(' ', text, selected, index)
 			else:
 				self.notify('Unknown type: ' + type, color='AA0000')
 		# Do we need a scroll-bar?
@@ -159,60 +168,46 @@ class Pino(AVGApp):
 			# We do..
 			pages = math.ceil(dir_len/20.0)
 			top = (self.dir_selected/float(dir_len-1))
-			self.scrollbar.pos = (self.scrollbar.pos[0], Y(60 + (1000-(1000/pages))*top))
-			self.scrollbar.size = (self.scrollbar.size[0], H(1000/pages))
-			self.scrollbar.fillopacity = .8
-		else:
-			# we don't
-			self.scrollbar.fillopacity = 0
+			self.draw_trans_rect(
+				COLOR['white'], 200,
+				XY(1225, 60 + (1000-(1000/pages))*top),
+				WH(10, 1000/pages))
 	
 	def draw_item(self, icon, text, selected, y):
-		box = avg.DivNode(pos=(W(0), H(y)), size=WH(1200, 50), opacity=1)
+		#box = avg.DivNode(pos=(W(0), H(y)), size=WH(1200, 50), opacity=1)
 		if selected:
-			avg.RectNode(parent=box,
-				pos=WH(0,0), size=WH(1200,50), fillcolor='000000',
-				fillopacity=.3, strokewidth=0)
-		avg.WordsNode(parent=box,
-			pos=WH(15,9), size=WH(38,40), text=icon, fontsize=F(1), font=font,
-			color=('aaaaaa' if selected else '888888'))
-		
-		words = avg.WordsNode(
-			text=text, fontsize=F(1), font=font,
-			color=('ffffff' if selected else 'aaaaaa'), rawtextmode=True)
-		while words.getMediaSize()[0] > W(1120):
-			text = text[:-1]
-			words.text = text + '...'
-		words.pos = WH(70,9)
-		box.appendChild(words)
-		self.listing.appendChild(box)
+			self.draw_trans_rect(
+				COLOR['black'], 80,
+				(X(20), Y(y*50 + 60)),
+				WH(1200, 50))
+		self.draw_text(
+			icon,
+			COLOR[('light' if selected else 'dark')],
+			(X(30), Y(y*50 + 69)))
+		self.draw_text(
+			text,
+			COLOR[('white' if selected else 'light')],
+			(X(80), Y(y*50 + 69)),
+			W(1120))
 	
 	def play(self, item):
 		self.notify('Working...')
 		subprocess.call(settings.player + [item])
 	
-	def onKeyDown(self, event):
-		c = event.keycode
-		if c in self.key_map.keys():
-			self.key_map[c](event)
-			return True
-		
-		self.notify('Unhandled key: {}'.format(c), duration=1000)
-		return False
-	
-	def up(self, event):
+	def up(self):
 		self.dir_selected = (self.dir_selected - 1) % len(self.dir_listing)
 		self.dir_scroll = (self.dir_selected / 20) * 20
 		self.draw_dir()
 	
-	def down(self, event):
+	def down(self):
 		self.dir_selected = (self.dir_selected + 1) % len(self.dir_listing)
 		self.dir_scroll = (self.dir_selected / 20) * 20
 		self.draw_dir()
 	
-	def back(self, event):
+	def back(self):
 		self.change_dir('..')
 	
-	def select(self, event):
+	def select(self):
 		# Find out what is selected
 		type, path, _ = self.dir_listing[self.dir_selected]
 		if type == 'd':
@@ -220,4 +215,4 @@ class Pino(AVGApp):
 		elif type == 'f':
 			self.play(path)
 	
-Pino.start(resolution=(width, height))
+Pino().run()
