@@ -16,8 +16,17 @@ except ImportError:
 		]
 		player = ['/usr/bin/mplayer', '-fs']
 
-pygame.init()
-screen = pygame.display.set_mode((1366,768), pygame.DOUBLEBUF, 32)#1920,1080), pygame.FULLSCREEN)
+rw, rh = 1920, 1080
+if hasattr(settings, 'width'): rw = settings.width
+if hasattr(settings, 'height'): rh = settings.height
+
+pygame.display.init()
+pygame.font.init()
+
+screen = pygame.display.set_mode(
+	(rw, rh),
+	pygame.DOUBLEBUF and pygame.FULLSCREEN,
+	32)
 width, height = screen.get_size()
 
 scale = min(width/1920.0, height/1080.0)
@@ -70,7 +79,7 @@ class Pino(object):
 				elif event.type == pygame.KEYDOWN:
 					c = event.key
 					if c in self.key_map.keys():
-						print self.key_map[c]()
+						self.key_map[c]()
 					else:	
 						self.notify('Unhandled key: {}'.format(c), duration=1000)
 			
@@ -174,7 +183,6 @@ class Pino(object):
 				WH(10, 1000/pages))
 	
 	def draw_item(self, icon, text, selected, y):
-		#box = avg.DivNode(pos=(W(0), H(y)), size=WH(1200, 50), opacity=1)
 		if selected:
 			self.draw_trans_rect(
 				COLOR['black'], 80,
