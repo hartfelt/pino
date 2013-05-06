@@ -4,7 +4,7 @@
 import math
 import os, os.path
 import subprocess
-from libavg import avg, AVGApp, ui
+from libavg import avg, AVGApp
 
 try:
 	import settings
@@ -14,14 +14,13 @@ except ImportError:
 			(os.getcwd(), os.getcwd()),
 		]
 		player = ['/usr/bin/mplayer', '-fs']
-		uiscale = 1.0
 
 # Singleton player-object for easy reference.
 player = avg.Player.get()
 
 # Actual screen size
 width, height = map(
-	lambda x:int(x*settings.uiscale),
+	lambda x:int(x),
 	player.getScreenResolution())
 if hasattr(settings, 'width'):
 	width = settings.width
