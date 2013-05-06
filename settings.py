@@ -5,6 +5,9 @@ paths = [
 	(u'/home/bjuhn/lain', u'Lain'),
 	(u'/home/bjuhn/incoming', u'Incoming'),
 ]
+
 player = ['/usr/bin/mplayer', '-fs']
-uiscale = 1.0
-height = 1059
+# Use this for Raspberry Pi
+#player = ['/usr/bin/omxplayer', '-o', 'hdmi', '-r']
+
+#height = 1059
