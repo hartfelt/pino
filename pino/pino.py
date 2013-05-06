@@ -3,7 +3,7 @@
 
 import math
 import os, os.path
-import subprocess
+from pyomxplayer import OMXPlayer
 import sys
 import pygame
 
@@ -53,13 +53,17 @@ def WH(w,h): return W(w), H(h)
 class Pino(object):
 	def __init__(self):
 		self.set_background('media/bg.png')
-		self.key_map = {
+		self.menu_key_map = {
 			pygame.K_RETURN: self.select,
 			pygame.K_UP: self.up,
 			pygame.K_DOWN: self.down,
 			pygame.K_RIGHT: self.select, # right
 			pygame.K_LEFT: self.back, # back
 			pygame.K_ESCAPE: sys.exit
+		}
+		self.player_key_map = {
+			pygame.K_ESCAPE: lambda: self.player.stop(),
+			pygame.K_SPACE: lambda: self.player.toggle_pause(),
 		}
 		self.notifies = {}
 		
@@ -71,6 +75,7 @@ class Pino(object):
 		self.dir_listing = self.ROOT
 		self.dir_scroll = 0
 		self.dir_selected = 0
+		self.player = None
 	
 	def run(self):
 		while True:
@@ -79,10 +84,14 @@ class Pino(object):
 					return
 				elif event.type == pygame.KEYDOWN:
 					c = event.key
-					if c in self.key_map.keys():
-						self.key_map[c]()
-					else:	
-						self.notify('Unhandled key: {}'.format(c), duration=1000)
+					if self.player:
+						if c in self.player_key_map.keys():
+							player_key_map[c]()
+					else:
+						if c in self.menu_key_map.keys():
+							self.menu_key_map[c]()
+						else:
+							self.notify('Unhandled key: {}'.format(c), duration=1000)
 			
 			# Draw the screen
 			screen.blit(self.background, (0,0))
@@ -200,8 +209,7 @@ class Pino(object):
 			W(1120))
 	
 	def play(self, item):
-		self.notify('Working...')
-		subprocess.call(settings.player + [item])
+		self.player = OMXPlayer(item)
 	
 	def up(self):
 		self.dir_selected = (self.dir_selected - 1) % len(self.dir_listing)
