@@ -11,23 +11,24 @@ try:
 	import settings
 except ImportError:
 	class settings:
-		paths = [
-			(os.getcwd(), os.getcwd()),
-		]
-		player = ['/usr/bin/mplayer', '-fs']
+		pass
 
-rw, rh = 1920, 1080
-if hasattr(settings, 'width'): rw = settings.width
-if hasattr(settings, 'height'): rh = settings.height
+for k, v in [
+		('paths', [(os.getcwd(), os.getcwd())]),
+		('width', 1920),
+		('height', 1080),
+		('fullscreen', True)]:
+	if not hasattr(settings, k):
+		setattr(settings, k, v)
 
 pygame.display.init()
 pygame.font.init()
 pygame.key.set_repeat(200, 100)
 
 mods = pygame.DOUBLEBUF
-if not hasattr(settings, 'fullscreen') or settings.fullscreen:
+if settings.fullscreen:
 	mods = mods and pygame.FULLSCREEN
-screen = pygame.display.set_mode((rw, rh), mods, 32)
+screen = pygame.display.set_mode((settings.width, settings.height), mods, 32)
 width, height = screen.get_size()
 
 scale = min(width/1920.0, height/1080.0)
@@ -209,7 +210,14 @@ class Pino(object):
 			W(1120))
 	
 	def play(self, item):
-		self.player = OMXPlayer(item)
+		self.player = OMXPlayer(
+			'"'+item+'"',
+			'-o hdmi -r',
+			done_callback=self.play_done)
+	
+	def play_done(self):
+		del self.player
+		self.notify('Playback of file is done')
 	
 	def up(self):
 		self.dir_selected = (self.dir_selected - 1) % len(self.dir_listing)

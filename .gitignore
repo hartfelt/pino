@@ -1,3 +1,6 @@
+pino/settings.py
+omxplayer.log
+omxplayer.old.log
 *.pyc
 bin
 include
