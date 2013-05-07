@@ -3,23 +3,16 @@
 
 import math
 import os, os.path
-from pyomxplayer import OMXPlayer
 import sys
 import pygame
+import settings
 
-try:
-	import settings
-except ImportError:
-	class settings:
-		pass
-
-for k, v in [
-		('paths', [(os.getcwd(), os.getcwd())]),
-		('width', 1920),
-		('height', 1080),
-		('fullscreen', True)]:
-	if not hasattr(settings, k):
-		setattr(settings, k, v)
+if settings.driver == 'mplayer':
+	from drivers.mplayer import Player
+elif settings.driver == 'omxplayer':
+	from drivers.omxplayer import Player
+else:
+	raise ImportError
 
 pygame.display.init()
 pygame.font.init()
@@ -69,8 +62,8 @@ class Pino(object):
 		self.notifies = {}
 		
 		self.ROOT = [('d', path, label) for path, label in settings.paths]
-			#('d', 'new', u'Newly added files'),
-			#('a', 'update', u'Update database'),
+			#('d', 'new', 'Newly added files'),
+			#('a', 'update', 'Update database'),
 		
 		self.dir_path = []
 		self.dir_listing = self.ROOT
@@ -96,7 +89,7 @@ class Pino(object):
 			
 			# Draw the screen
 			screen.blit(self.background, (0,0))
-			self.draw_text(u'Pino', COLOR['white'], XY(20,20))
+			self.draw_text('Pino', COLOR['white'], XY(20,20))
 			self.draw_trans_rect(
 				COLOR['black'], 128,
 				XY(20, 60), WH(1200, 1000))
@@ -173,7 +166,7 @@ class Pino(object):
 		self.draw_dir()
 	
 	def draw_dir(self):
-		these = self.dir_listing[self.dir_scroll:self.dir_scroll + 20]
+		these = self.dir_listing[self.dir_scroll:][:20]
 		for index, (type, target, text) in enumerate(these):
 			selected = (index+self.dir_scroll == self.dir_selected)
 			if type == 'd':
@@ -210,23 +203,21 @@ class Pino(object):
 			W(1120))
 	
 	def play(self, item):
-		self.player = OMXPlayer(
-			'"'+item+'"',
-			'-o hdmi -r',
-			done_callback=self.play_done)
+		self.player = Player(item, done_callback=self.play_done)
+		self.player.play()
 	
 	def play_done(self):
-		del self.player
+		self.player = None
 		self.notify('Playback of file is done')
 	
 	def up(self):
 		self.dir_selected = (self.dir_selected - 1) % len(self.dir_listing)
-		self.dir_scroll = (self.dir_selected / 20) * 20
+		self.dir_scroll = (self.dir_selected // 20) * 20
 		self.draw_dir()
 	
 	def down(self):
 		self.dir_selected = (self.dir_selected + 1) % len(self.dir_listing)
-		self.dir_scroll = (self.dir_selected / 20) * 20
+		self.dir_scroll = (self.dir_selected // 20) * 20
 		self.draw_dir()
 	
 	def back(self):

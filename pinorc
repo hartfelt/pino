@@ -1,0 +1,14 @@
+[pino]
+;fullscreen = yes
+;width = 1920
+;height = 1080
+
+; Use this for desktops
+;driver = mplayer
+
+; Use this for the Raspberri Pi
+;driver = omxplayer
+
+[paths]
+; Add absolute paths like this:
+;Movies = /home/you/movies

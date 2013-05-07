@@ -1,8 +1,5 @@
-pino/settings.py
 omxplayer.log
 omxplayer.old.log
-*.pyc
-bin
-include
-lib
-local
+__pycache__
+MANIFEST
+dist
