@@ -7,7 +7,10 @@ setup(
 	author='Bjørn Hartfelt',
 	author_email='b.hartfelt@gmail.com',
 	url='http://hartfelt.de/pino',
-	#packages=['pino'],
+	packages=['drivers', 'utils'],
 	scripts=['pino.py'],
-	data_files=[('/etc', ['pinorc'])],
+	data_files=[
+		('/etc', ['pinorc']),
+		('media', ['media/bg.png', 'media/sans.ttf']),
+	],
 )

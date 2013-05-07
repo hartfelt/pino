@@ -5,7 +5,7 @@ import math
 import os, os.path
 import sys
 import pygame
-import settings
+import utils.settings as settings
 
 if settings.driver == 'mplayer':
 	from drivers.mplayer import Player
