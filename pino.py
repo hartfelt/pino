@@ -57,6 +57,7 @@ class Pino(object):
 		}
 		self.player_key_map = {
 			pygame.K_ESCAPE: lambda: self.player.stop(),
+			pygame.K_q: lambda: self.player.stop(),
 			pygame.K_SPACE: lambda: self.player.toggle_pause(),
 		}
 		self.notifies = {}
@@ -80,7 +81,7 @@ class Pino(object):
 					c = event.key
 					if self.player:
 						if c in self.player_key_map.keys():
-							player_key_map[c]()
+							self.player_key_map[c]()
 					else:
 						if c in self.menu_key_map.keys():
 							self.menu_key_map[c]()
