@@ -63,10 +63,10 @@ class Pino(object):
 			pygame.K_ESCAPE: lambda: self.player.stop(),
 			pygame.K_q: lambda: self.player.stop(),
 			pygame.K_SPACE: lambda: self.player.toggle_pause(),
-			pygame.K_UP: lambda: self.player.seek(60),
-			pygame.K_DOWN: lambda: self.player.seek(-60),
-			pygame.K_LEFT: lambda: self.player.seek(-10),
-			pygame.K_RIGHT: lambda: self.player.seek(10),
+			pygame.K_UP: lambda: self.player.seek(600),
+			pygame.K_DOWN: lambda: self.player.seek(-600),
+			pygame.K_LEFT: lambda: self.player.seek(-30),
+			pygame.K_RIGHT: lambda: self.player.seek(30),
 		}
 		self.notifies = {}
 		
@@ -221,7 +221,7 @@ class Pino(object):
 	
 	def play_done(self):
 		self.player = None
-		self.notify('Playback of file is done')
+		self.notify('Playback finished')
 	
 	def up(self):
 		self.dir_selected = (self.dir_selected - 1) % len(self.dir_listing)
