@@ -59,6 +59,10 @@ class Pino(object):
 			pygame.K_ESCAPE: lambda: self.player.stop(),
 			pygame.K_q: lambda: self.player.stop(),
 			pygame.K_SPACE: lambda: self.player.toggle_pause(),
+			pygame.K_UP: lambda: self.player.seek(60),
+			pygame.K_DOWN: lambda: self.player.seek(-60),
+			pygame.K_LEFT: lambda: self.player.seek(-10),
+			pygame.K_RIGHT: lambda: self.player.seek(10),
 		}
 		self.notifies = {}
 		

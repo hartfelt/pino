@@ -11,3 +11,6 @@ class BasePlayer(object):
 	
 	def stop(self):
 		raise NotImplementedError
+	
+	def seek(self, offset):
+		raise NotImplementedError

@@ -49,3 +49,18 @@ class Player(BasePlayer):
 	def stop(self):
 		self._process.send('q')
 		self._process.expect(pexpect.EOF)
+	
+	def seek(self, offset):
+		offset = int(round(offset / 10))
+		while offset >= 6:
+			self._process.send('\x1b[A') # up
+			offset -= 6
+		while offset >= 1:
+			self._process.send('\x1b[C') # right
+			offset -= 1
+		while offset <= -6:
+			self._process.send('\x1b[B') # down
+			offset += 6
+		while offset <= -1:
+			self._process.send('\x1b[D') # left
+			offset += 1
