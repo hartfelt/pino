@@ -6,6 +6,7 @@ import os, os.path
 import sys
 import pygame
 import utils.settings as settings
+from utils.time import setTimeout
 
 if settings.driver == 'mplayer':
 	from drivers.mplayer import Player
@@ -40,9 +41,12 @@ COLOR = {
 # Helpers to scale stuff to fit on the conceptual 1920×1080-screen
 X = lambda x: int(x * scale + dx)
 Y = lambda y: int(y * scale + dy)
-W = H = lambda l: int(l * scale)
+W = H = lambda l: max(1, int(l * scale))
 def XY(x,y): return X(x), Y(y)
 def WH(w,h): return W(w), H(h)
+
+# pygame userevents
+REMOVE_NOTIFY = pygame.USEREVENT + 1
 
 class Pino(object):
 	def __init__(self):
@@ -90,7 +94,9 @@ class Pino(object):
 						if c in self.menu_key_map.keys():
 							self.menu_key_map[c]()
 						else:
-							self.notify('Unhandled key: {}'.format(c), duration=1000)
+							self.notify('Unhandled key: {}'.format(c), duration=1)
+				elif event.type == REMOVE_NOTIFY:
+					del self.notifies[event.y]
 			
 			# Draw the screen
 			screen.blit(self.background, (0,0))
@@ -122,7 +128,7 @@ class Pino(object):
 			pygame.image.load(filename).convert(),
 			(width,height))
 		
-	def notify(self, message, duration=4000, color=COLOR['black']):
+	def notify(self, message, duration=4, color=COLOR['black']):
 		x = W(1920) - font.size(message)[0] - W(30)
 		# Find suitable place for notification.
 		y = 10
@@ -130,16 +136,14 @@ class Pino(object):
 			if not y in self.notifies.keys():
 				break
 			y += 60
-		self.notifies[y] = (message, color, pygame.time.get_ticks()+duration, x)
+		self.notifies[y] = (message, color, x)
+		setTimeout(duration, pygame.event.post,
+			pygame.event.Event(REMOVE_NOTIFY, y=y))
 	
 	def draw_notifies(self):
-		now = pygame.time.get_ticks()
-		for y, (message, color, timeout, x) in self.notifies.items():
-			if timeout < now:
-				del self.notifies[y]
-			else:
-				self.draw_trans_rect(color, 128, (x, Y(y)), (W(1910)-x, H(50)))
-				self.draw_text(message, COLOR['white'], (x+W(10), Y(y+5)))
+		for y, (message, color, x) in self.notifies.items():
+			self.draw_trans_rect(color, 128, (x, Y(y)), (W(1910)-x, H(50)))
+			self.draw_text(message, COLOR['white'], (x+W(10), Y(y+5)))
 	
 	def change_dir(self, to):
 		if to == '..':
@@ -197,6 +201,10 @@ class Pino(object):
 				COLOR['black'], 80,
 				(X(20), Y(y*50 + 60)),
 				WH(1200, 50))
+			self.draw_trans_rect(
+				COLOR['white'], 200,
+				(X(10), Y(y*50 + 60)),
+				WH(10, 50))
 		self.draw_text(
 			icon,
 			COLOR[('light' if selected else 'dark')],
