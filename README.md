@@ -1,25 +1,46 @@
-PINO - Simple media center interface for the Raspberry Pi
-=========================================================
+PINO - Simple media center interface
+====================================
+
+Requirements
+------------
+Python 3.2 (or newer)
+
+Python modules:
+- pygame (a version that works with python3. I've only had success building
+  it from source)
+- pexpect-u (available on pypi)
+
+An program that'll play your movies. Currently supported:
+- omxplayer if you're running pino on a raspberry pi
+- mplayer (preferrably mplayer2) if you're running on anything else
+
+Installation
+------------
+Until I figure out how to distribute images in python packages, don't...
+
+Usage
+-----
+Start pino with './pino' (for now...)
+
+The following keys work in the menu:
+- Up/Down: navigate the menu.
+- Left: Up a dir.
+- Right/Enter: Select dir or play file.
+- Escape: Quit pino.
+
+The following keys work when playing files:
+- Space: Toggle pause.
+- Q/Escape: Stop playback, return to menu.
+- Left/Right: Seek 30sec back/forward.
+- Up/Down: Seek 10min back/forward.
+
+Note that if you use the mplayer driver, the mplayer window will likely take
+focus and intercept the key stokes. (But fear not, the keybindings are the
+same, except for shorter seeks)
 
 Configuration
 -------------
-
-Make a settings.py in the same directory as pino.py. The following exported values are used:
-
-  paths = [('path', 'Label'), ...]
-    A list of tuples describing the root-level of the menu.
-    Defaults to current working directory.
-    
-    If your paths or labels contains non-ascii characters, you'll need to have
-      # -*- coding: utf8 -*-
-    at the top of your file.
-
-  fullscreen = False
-    Set this to False to disable fullscreen.
-    Defaults to True.
-
-  width, height = 1920, 1080
-    Set these to your setups native screen resolution.
-    Default to 1920, 1080.
-
-The settings is a simple python script, so you can do whatever magic trickery you want ;)
+Copy the supplied pinorc to ~/.pinorc, and modify to fit your needs.
+The `[paths]` section defines the root menu in pino. Define as many directories
+as you want. The format is `key = value`, one on each line. The key is displayed
+in the menu, the value is the absolute path to a directory.
