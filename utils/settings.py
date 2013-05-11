@@ -16,6 +16,7 @@ _config.read_dict({
 		'height': '1080',
 		'fullscreen': 'yes',
 		'driver': 'mplayer',
+		'preplay_delay': '0',
 	}
 })
 
@@ -33,3 +34,4 @@ width = int(_config['pino']['width'])
 height = int(_config['pino']['height'])
 fullscreen = _config['pino'].getboolean('fullscreen')
 driver = _config['pino']['driver']
+preplay_delay = max(0, float(_config['pino']['preplay_delay']))

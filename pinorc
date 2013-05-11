@@ -9,6 +9,9 @@
 ; Use this for the Raspberri Pi
 ;driver = omxplayer
 
+; A number of seconds to pause movies before playback
+;preplay_delay = 0
+
 [paths]
 ; Add absolute paths like this:
 ;Movies = /home/you/movies
