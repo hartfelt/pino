@@ -93,8 +93,6 @@ class Pino(object):
 					else:
 						if c in self.menu_key_map.keys():
 							self.menu_key_map[c]()
-						else:
-							self.notify('Unhandled key: {}'.format(c), duration=1)
 				elif event.type == REMOVE_NOTIFY:
 					del self.notifies[event.y]
 			
