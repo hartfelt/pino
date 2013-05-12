@@ -3,6 +3,7 @@
 import math
 import os, os.path
 import sys
+import time
 import pygame
 import utils.settings as settings
 from utils.time import setTimeout
@@ -216,6 +217,7 @@ class Pino(object):
 	
 	def play(self, item):
 		self.player = Player(item, done_callback=self.play_done)
+		time.sleep(settings.preplay_delay)
 		self.player.play()
 	
 	def play_done(self):

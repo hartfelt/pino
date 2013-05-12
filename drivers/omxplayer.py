@@ -1,9 +1,7 @@
 from drivers import BasePlayer
-from utils import settings
 
 import pexpect
 from threading import Thread
-import time
 
 class Player(BasePlayer):
 	def __init__(self, *args, **kwargs):
@@ -19,7 +17,6 @@ class Player(BasePlayer):
 		
 		self._position_thread = Thread(target=self._get_position)
 		self._position_thread.start()
-		time.sleep(settings.preplay_delay)
 	
 	def _get_position(self):
 		while True:
