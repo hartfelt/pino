@@ -17,6 +17,7 @@ _config.read_dict({
 		'fullscreen': 'yes',
 		'driver': 'mplayer',
 		'preplay_delay': '0',
+		'database': '~/.pino.db'
 	}
 })
 
@@ -35,3 +36,4 @@ height = int(_config['pino']['height'])
 fullscreen = _config['pino'].getboolean('fullscreen')
 driver = _config['pino']['driver']
 preplay_delay = max(0, float(_config['pino']['preplay_delay']))
+database = os.path.expanduser(_config['pino']['database'])

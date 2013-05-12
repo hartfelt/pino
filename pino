@@ -7,6 +7,7 @@ import time
 import pygame
 import utils.settings as settings
 from utils.time import setTimeout
+from utils import db
 
 if settings.driver == 'mplayer':
 	from drivers.mplayer import Player
@@ -36,6 +37,7 @@ COLOR = {
 	'black': pygame.color.Color(0,0,0),
 	'light': pygame.color.Color(200,200,200),
 	'dark': pygame.color.Color(160,160,160),
+	'check': pygame.color.Color(120, 255, 160),
 }
 
 # Helpers to scale stuff to fit on the conceptual 1920×1080-screen
@@ -70,7 +72,7 @@ class Pino(object):
 		}
 		self.notifies = {}
 		
-		self.ROOT = [('d', path, label) for path, label in settings.paths]
+		self.ROOT = [('d', path, label, '') for path, label in settings.paths]
 			#('d', 'new', 'Newly added files'),
 			#('a', 'update', 'Update database'),
 		
@@ -164,22 +166,23 @@ class Pino(object):
 				if item[0] == '.': continue # skip hidden files
 				absitem = os.path.join(cwd, item)
 				if os.path.isdir(absitem):
-					self.dir_listing.append(('d', absitem, item))
+					self.dir_listing.append(('d', absitem, item, ''))
 				else:
-					self.dir_listing.append(('f', absitem, item))
+					watched = 'w' if db.is_watched(absitem) else ''
+					self.dir_listing.append(('f', absitem, item, watched))
 			if not self.dir_listing:
-				self.dir_listing = [('d', '..', '(empty)')]
+				self.dir_listing = [('d', '..', '(empty)', '')]
 		
 		self.draw_dir()
 	
 	def draw_dir(self):
 		these = self.dir_listing[self.dir_scroll:][:20]
-		for index, (type, target, text) in enumerate(these):
+		for index, (type, target, text, mark) in enumerate(these):
 			selected = (index+self.dir_scroll == self.dir_selected)
 			if type == 'd':
-				self.draw_item('dir', text, selected, index)
+				self.draw_item('dir', text, selected, index, mark)
 			elif type == 'f':
-				self.draw_item(' ', text, selected, index)
+				self.draw_item(' ', text, selected, index, mark)
 			else:
 				self.notify('Unknown type: ' + type, color='AA0000')
 		# Do we need a scroll-bar?
@@ -193,7 +196,7 @@ class Pino(object):
 				XY(1225, 60 + (1000-(1000/pages))*top),
 				WH(10, 1000/pages))
 	
-	def draw_item(self, icon, text, selected, y):
+	def draw_item(self, icon, text, selected, y, mark):
 		if selected:
 			self.draw_trans_rect(
 				COLOR['black'], 80,
@@ -211,20 +214,28 @@ class Pino(object):
 			text,
 			COLOR[('white' if selected else 'light')],
 			(X(80), Y(y*50 + 69)),
-			W(1120))
+			W(1090))
+		if mark == 'w':
+			self.draw_text(
+				'✔', COLOR['check'],
+				(X(1182), Y(y*50 + 69)))
 	
 	def play(self, item):
+		self.playing_item = item
 		self.player = Player(item, done_callback=self.play_done)
 		time.sleep(settings.preplay_delay)
 		self.player.play()
 	
 	def play_done(self, user_aborted):
-		print('PLAY DONE', user_aborted)
 		self.player = None
 		if user_aborted:
 			self.notify('Playback aborted')
 		else:
 			self.notify('Playback finished')
+			# Remember that this file have been watched
+			db.watch_file(self.playing_item)
+			a, b, c, _ = self.dir_listing[self.dir_selected]
+			self.dir_listing[self.dir_selected] = (a, b, c, 'w')
 	
 	def up(self):
 		self.dir_selected = (self.dir_selected - 1) % len(self.dir_listing)
@@ -241,7 +252,7 @@ class Pino(object):
 	
 	def select(self):
 		# Find out what is selected
-		type, path, _ = self.dir_listing[self.dir_selected]
+		type, path, _n, _m  = self.dir_listing[self.dir_selected]
 		if type == 'd':
 			self.change_dir(path)
 		elif type == 'f':
