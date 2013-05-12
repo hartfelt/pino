@@ -1,7 +1,7 @@
 class BasePlayer(object):
 	def __init__(self, file, done_callback=(lambda: None)):
-		self.file = file
-		self.done_callback = done_callback
+		self._file = file
+		self._done_callback = done_callback
 	
 	def play(self):
 		raise NotImplementedError

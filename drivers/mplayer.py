@@ -8,8 +8,8 @@ class Player(BasePlayer):
 		super().__init__(*args, **kwargs)
 		self._process = pexpect.spawn('/usr/bin/mplayer', [
 			'-fs',
-			'-msglevel', 'all=0:STATUSLINE=5',
-			self.file
+			'-msglevel', 'all=0:STATUSLINE=5:CPLAYER=4',
+			self._file
 		])
 		self.state = 'playing'
 		self.toggle_pause()
@@ -22,6 +22,7 @@ class Player(BasePlayer):
 		while True:
 			i = self._process.expect([
 				'A: *(\d+\.\d) ',
+				'Exiting\.\.\. \((.+)\)',
 				pexpect.EOF,
 				pexpect.TIMEOUT
 			])
@@ -29,7 +30,11 @@ class Player(BasePlayer):
 				self.position = float(self._process.match.groups()[0])
 			if i == 1:
 				self.state = 'stopped'
-				self.done_callback()
+				self._done_callback(self._process.match.groups()[0] == 'Quit')
+				break
+			if i == 2:
+				self.state = 'stopped'
+				self._done_callback(False)
 				break
 			# Ignore timeouts
 	
@@ -44,7 +49,6 @@ class Player(BasePlayer):
 	def play(self):
 		if self.state == 'paused':
 			self.toggle_pause()
-		#self.done_callback()
 	
 	def stop(self):
 		self._process.send('q')

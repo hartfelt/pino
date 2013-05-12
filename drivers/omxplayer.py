@@ -9,11 +9,12 @@ class Player(BasePlayer):
 		self._process = pexpect.spawn('/usr/bin/omxplayer', [
 			'-r',
 			'-o', 'hdmi',
-			self.file
+			self._file
 		])
 		self.state = 'playing'
 		self.toggle_pause()
 		self.position = 0.0
+		self._aborted = False
 		
 		self._position_thread = Thread(target=self._get_position)
 		self._position_thread.start()
@@ -29,7 +30,7 @@ class Player(BasePlayer):
 				self.position = float(self._process.match.groups()[0])
 			if i == 1:
 				self.state = 'stopped'
-				self.done_callback()
+				self._done_callback(self._aborted)
 				break
 			# Ignore timeouts
 	
@@ -44,9 +45,9 @@ class Player(BasePlayer):
 	def play(self):
 		if self.state == 'paused':
 			self.toggle_pause()
-		#self.done_callback()
 	
 	def stop(self):
+		self._aborted = True
 		self._process.send('q')
 		self._process.expect(pexpect.EOF)
 	

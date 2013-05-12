@@ -218,9 +218,13 @@ class Pino(object):
 		time.sleep(settings.preplay_delay)
 		self.player.play()
 	
-	def play_done(self):
+	def play_done(self, user_aborted):
+		print('PLAY DONE', user_aborted)
 		self.player = None
-		self.notify('Playback finished')
+		if user_aborted:
+			self.notify('Playback aborted')
+		else:
+			self.notify('Playback finished')
 	
 	def up(self):
 		self.dir_selected = (self.dir_selected - 1) % len(self.dir_listing)
