@@ -59,7 +59,9 @@ class Pino(object):
 			pygame.K_DOWN: self.down,
 			pygame.K_RIGHT: self.select, # right
 			pygame.K_LEFT: self.back, # back
-			pygame.K_ESCAPE: sys.exit
+			pygame.K_ESCAPE: sys.exit,
+			pygame.K_PAGEUP: lambda: self.up(20),
+			pygame.K_PAGEDOWN: lambda: self.down(20),
 		}
 		self.player_key_map = {
 			pygame.K_ESCAPE: lambda: self.player.stop(),
@@ -237,13 +239,13 @@ class Pino(object):
 			a, b, c, _ = self.dir_listing[self.dir_selected]
 			self.dir_listing[self.dir_selected] = (a, b, c, 'w')
 	
-	def up(self):
-		self.dir_selected = (self.dir_selected - 1) % len(self.dir_listing)
+	def up(self, rows=1):
+		self.dir_selected = (self.dir_selected - rows) % len(self.dir_listing)
 		self.dir_scroll = (self.dir_selected // 20) * 20
 		self.draw_dir()
 	
-	def down(self):
-		self.dir_selected = (self.dir_selected + 1) % len(self.dir_listing)
+	def down(self, rows=1):
+		self.dir_selected = (self.dir_selected + rows) % len(self.dir_listing)
 		self.dir_scroll = (self.dir_selected // 20) * 20
 		self.draw_dir()
 	

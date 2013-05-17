@@ -23,7 +23,7 @@ Usage
 Start pino with './pino' (for now...)
 
 The following keys work in the menu:
-- Up/Down: navigate the menu.
+- Up/Down/PgUp/PgDown: Navigate the menu.
 - Left: Up a dir.
 - Right/Enter: Select dir or play file.
 - Escape: Quit pino.
